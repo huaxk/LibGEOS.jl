@@ -1302,12 +1302,14 @@ function GEOSWKBWriter_writeHEX(writer::Ptr{GEOSWKBWriter},g::Ptr{GEOSGeometry},
     ccall((:GEOSWKBWriter_writeHEX,libgeos),Ptr{Cuchar},(Ptr{GEOSWKBWriter},Ptr{GEOSGeometry},Ptr{Csize_t}),writer,g,size)
 end
 
-function GEOSWKBWriter_write_r(handle::GEOSContextHandle_t,writer::Ptr{GEOSWKBWriter},g::Ptr{GEOSGeometry},size::Ptr{Csize_t})
-    ccall((:GEOSWKBWriter_write_r,libgeos),Ptr{Cuchar},(GEOSContextHandle_t,Ptr{GEOSWKBWriter},Ptr{GEOSGeometry},Ptr{Csize_t}),handle,writer,g,size)
+# new wrap
+function GEOSWKBWriter_write_r(handle, writer, g, size)
+    ccall((:GEOSWKBWriter_write_r, libgeos), Ptr{Cuchar}, (GEOSContextHandle_t, Ptr{GEOSWKBWriter}, Ptr{GEOSGeometry}, Ptr{Csize_t}), handle, writer, g, size)
 end
 
-function GEOSWKBWriter_writeHEX_r(handle::GEOSContextHandle_t,writer::Ptr{GEOSWKBWriter},g::Ptr{GEOSGeometry},size::Ptr{Csize_t})
-    ccall((:GEOSWKBWriter_writeHEX_r,libgeos),Ptr{Cuchar},(GEOSContextHandle_t,Ptr{GEOSWKBWriter},Ptr{GEOSGeometry},Ptr{Csize_t}),handle,writer,g,size)
+# new wrap
+function GEOSWKBWriter_writeHEX_r(handle, writer, g, size)
+    ccall((:GEOSWKBWriter_writeHEX_r, libgeos), Ptr{Cuchar}, (GEOSContextHandle_t, Ptr{GEOSWKBWriter}, Ptr{GEOSGeometry}, Ptr{Csize_t}), handle, writer, g, size)
 end
 
 function GEOSWKBWriter_getOutputDimension(writer::Ptr{GEOSWKBWriter})

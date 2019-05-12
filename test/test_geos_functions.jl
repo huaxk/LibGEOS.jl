@@ -685,4 +685,49 @@
     geom_ = LibGEOS._readgeom("LINESTRING(0 0, 0 1, 1 1, 0 0)")
     @test LibGEOS.isClosed(geom_)
     LibGEOS.destroyGeom(geom_)
+
+    #GEOSWKBReadWriteTest
+    x, y = 2.0, 3.0
+    typeid = 0
+    wkt = "Point($x $y)"
+    bytewkb = "\x01\x01\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
+    hexwkb = "010100000000000000000000400000000000000840"
+    srid = 4326
+    bytewkb_srid = "\x01\x01\0\0 \xe6\x10\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
+    hexwkb_srid = "0101000020E610000000000000000000400000000000000840"
+
+    pt = LibGEOS.readgeom(wkt)
+    @test writewkb(pt) == bytewkb
+    @test writewkb(pt, hex=true) == hexwkb
+    @test writewkb(pt, 4326) == bytewkb_srid
+    @test writewkb(pt, 4326, hex=true) == hexwkb_srid
+
+    pt = LibGEOS.readwkb(bytewkb)
+    @test LibGEOS.geomTypeId(pt.ptr) == typeid
+    @test LibGEOS.getGeomX(pt.ptr) == x
+    @test LibGEOS.getGeomY(pt.ptr) == y
+
+    pt = LibGEOS.readwkb(hexwkb, hex=true)
+    @test LibGEOS.geomTypeId(pt.ptr) == typeid
+    @test LibGEOS.getGeomX(pt.ptr) == x
+    @test LibGEOS.getGeomY(pt.ptr) == y
+
+    pt = LibGEOS.readwkb(bytewkb_srid)
+    @test LibGEOS.geomTypeId(pt.ptr) == typeid
+    @test LibGEOS.getGeomX(pt.ptr) == x
+    @test LibGEOS.getGeomY(pt.ptr) == y
+    @test LibGEOS.getSRID(pt.ptr) ==  srid
+
+    pt = LibGEOS.readwkb(hexwkb_srid, hex=true)
+    @test LibGEOS.geomTypeId(pt.ptr) == typeid
+    @test LibGEOS.getSRID(pt.ptr) == srid
+    @test LibGEOS.getGeomX(pt.ptr) == x
+    @test LibGEOS.getGeomY(pt.ptr) == y
+    @test LibGEOS.getSRID(pt.ptr) ==  srid
+
+    # GEOSSRIDGetSetTest
+    pt = LibGEOS.readgeom(wkt)
+    @test_broken LibGEOS.getSRID(pt)
+    LibGEOS.setSRID(pt, srid)
+    @test LibGEOS.getSRID(pt) == srid
 end

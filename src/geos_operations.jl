@@ -11,6 +11,20 @@ for geom in (:Point, :MultiPoint, :LineString, :MultiLineString, :LinearRing, :P
     @eval writegeom(obj::$geom, wktwriter::WKTWriter, context::GEOSContext = _context) = _writegeom(obj.ptr, wktwriter, context)
     @eval writegeom(obj::$geom, wkbwriter::WKBWriter, context::GEOSContext = _context) = _writegeom(obj.ptr, wkbwriter, context)
     @eval writegeom(obj::$geom, context::GEOSContext = _context) = _writegeom(obj.ptr, context)
+    # add--------------------
+    @eval getSRID(obj::$geom, context::GEOSContext=_context) = LibGEOS.getSRID(obj.ptr, context)
+    @eval setSRID(obj::$geom, SRID::Integer, context::GEOSContext=_context) = setSRID(obj.ptr, SRID, context)
+    @eval writewkb(obj::$geom, wkbwriter::WKBWriter, context::GEOSContext=_context; hex=false) =
+         (hex ? _writehexwkb(obj.ptr, wkbwriter, context) : writegeom(obj, wkbwriter, context)) |> String
+    @eval writewkb(obj::$geom, context::GEOSContext=_context; hex=false) = writewkb(obj, WKBWriter(context), context; hex=hex) |> String
+    # support srid1
+    @eval writewkb(obj::$geom, SRID::Integer, context::GEOSContext=_context; hex=false) = begin
+        writer = WKBWriter(context)
+        setIncludeSRID(writer, true)
+        setSRID(obj, SRID)
+        writewkb(obj, writer, context; hex=hex) |> String
+    end
+    # end add--------------------
 end
 
 function geomFromGEOS(ptr::GEOSGeom)
@@ -42,6 +56,17 @@ readgeom(wkbbuffer::Vector{Cuchar}, wkbreader::WKBReader, context::GEOSContext=_
     geomFromGEOS(_readgeom(wkbbuffer, wkbreader, context))
 readgeom(wkbbuffer::Vector{Cuchar}, context::GEOSContext=_context) =
     readgeom(wkbbuffer, WKBReader(context), context)
+
+# add----------------------
+readhexwkb(wkbstring::String, wkbreader::WKBReader, context::GEOSContext=_context) =
+    geomFromGEOS(_readhexwkb(wkbstring, wkbreader, context))
+readhexwkb(wkbstring::String, context::GEOSContext=_context) =
+    readhexwkb(wkbstring, WKBReader(context), context)
+
+readwkb(wkbstring::String, context::GEOSContext=_context; hex=false) =
+    hex ? readhexwkb(wkbstring, context) :
+          readgeom(Vector{UInt8}(wkbstring), context)
+#end add--------------------
 
 # -----
 # Linear referencing functions -- there are more, but these are probably sufficient for most purposes
