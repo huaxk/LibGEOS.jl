@@ -688,46 +688,33 @@
 
     #GEOSWKBReadWriteTest
     x, y = 2.0, 3.0
+    srid = 4326
     typeid = 0
     wkt = "Point($x $y)"
-    bytewkb = "\x01\x01\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
+    # bytewkb = "\x01\x01\0\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
     hexwkb = "010100000000000000000000400000000000000840"
-    srid = 4326
-    bytewkb_srid = "\x01\x01\0\0 \xe6\x10\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
+    # bytewkb_srid = "\x01\x01\0\0 \xe6\x10\0\0\0\0\0\0\0\0\0@\0\0\0\0\0\0\b@"
     hexwkb_srid = "0101000020E610000000000000000000400000000000000840"
+    context = LibGEOS._context
 
-    pt = LibGEOS.readgeom(wkt)
-    @test writewkb(pt) == bytewkb
-    @test writewkb(pt, hex=true) == hexwkb
-    @test writewkb(pt, 4326) == bytewkb_srid
-    @test writewkb(pt, 4326, hex=true) == hexwkb_srid
+    ptr = LibGEOS._readhexwkb(hexwkb, LibGEOS.WKBReader(context), context)
+    @test LibGEOS.geomTypeId(ptr) == typeid
+    @test LibGEOS.getGeomX(ptr) == x
+    @test LibGEOS.getGeomY(ptr) == y
+    @test LibGEOS._writehexwkb(ptr, LibGEOS.WKBWriter(context), context) |> String == hexwkb
+    @test_broken LibGEOS.getSRID(ptr)
+    LibGEOS.setSRID(ptr, srid)
+    @test LibGEOS.getSRID(ptr) == srid
 
-    pt = LibGEOS.readwkb(bytewkb)
-    @test LibGEOS.geomTypeId(pt.ptr) == typeid
-    @test LibGEOS.getGeomX(pt.ptr) == x
-    @test LibGEOS.getGeomY(pt.ptr) == y
-
-    pt = LibGEOS.readwkb(hexwkb, hex=true)
-    @test LibGEOS.geomTypeId(pt.ptr) == typeid
-    @test LibGEOS.getGeomX(pt.ptr) == x
-    @test LibGEOS.getGeomY(pt.ptr) == y
-
-    pt = LibGEOS.readwkb(bytewkb_srid)
-    @test LibGEOS.geomTypeId(pt.ptr) == typeid
-    @test LibGEOS.getGeomX(pt.ptr) == x
-    @test LibGEOS.getGeomY(pt.ptr) == y
-    @test LibGEOS.getSRID(pt.ptr) ==  srid
-
-    pt = LibGEOS.readwkb(hexwkb_srid, hex=true)
-    @test LibGEOS.geomTypeId(pt.ptr) == typeid
-    @test LibGEOS.getSRID(pt.ptr) == srid
-    @test LibGEOS.getGeomX(pt.ptr) == x
-    @test LibGEOS.getGeomY(pt.ptr) == y
-    @test LibGEOS.getSRID(pt.ptr) ==  srid
-
-    # GEOSSRIDGetSetTest
-    pt = LibGEOS.readgeom(wkt)
-    @test_broken LibGEOS.getSRID(pt)
-    LibGEOS.setSRID(pt, srid)
-    @test LibGEOS.getSRID(pt) == srid
+    ptr = LibGEOS._readhexwkb(hexwkb_srid, LibGEOS.WKBReader(context), context)
+    @test LibGEOS.geomTypeId(ptr) == typeid
+    @test LibGEOS.getSRID(ptr) == srid
+    @test LibGEOS.getGeomX(ptr) == x
+    @test LibGEOS.getGeomY(ptr) == y
+    @test LibGEOS.getSRID(ptr) == srid
+    writer = LibGEOS.WKBWriter(context)
+    LibGEOS.setIncludeSRID(writer, true)
+    @test LibGEOS._writehexwkb( ptr,
+                                writer,
+                                context) |> String == hexwkb_srid
 end
