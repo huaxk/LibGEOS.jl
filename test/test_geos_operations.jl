@@ -248,7 +248,7 @@ end
     # Buffer should return Polygon or MultiPolygon
     @test buffer(MultiPoint([[1.0, 1.0], [2.0, 2.0], [2.0, 0.0]]), 0.1) isa LibGEOS.MultiPolygon
     @test buffer(MultiPoint([[1.0, 1.0], [2.0, 2.0], [2.0, 0.0]]), 10) isa LibGEOS.Polygon
-    
+
     # bufferWithStyle
     g1 = bufferWithStyle(readgeom("LINESTRING(0 0,0 1,1 1)"), 0.1, endCapStyle=LibGEOS.GEOSBUF_CAP_FLAT, joinStyle=LibGEOS.GEOSBUF_JOIN_BEVEL)
     g2 = readgeom("POLYGON((-0.1 0.0,-0.1 1.0,0.0 1.1,1.0 1.1,1.0 0.9,0.1 0.9,0.1 0.0,-0.1 0.0))")
@@ -261,4 +261,43 @@ end
     g1 = bufferWithStyle(readgeom("POLYGON((-1 -1,1 -1,1 1,-1 1,-1 -1))"), 0.2, joinStyle=LibGEOS.GEOSBUF_JOIN_MITRE)
     g2 = readgeom("POLYGON((-1.2 1.2,1.2 1.2,1.2 -1.2,-1.2 -1.2,-1.2 1.2))")
     @test equals(g1, g2)
+
+    #GEOSWKBReadWriteTest
+    x, y = 2.0, 3.0
+    srid = 4326
+    wkt = "Point($x $y)"
+    hexwkb = "010100000000000000000000400000000000000840"
+    bytewkb = hex2bytes(hexwkb) |> String
+    hexwkb_srid = "0101000020E610000000000000000000400000000000000840"
+    bytewkb_srid = hex2bytes(hexwkb_srid) |> String
+
+    pt = readgeom(wkt)
+    @test writewkb(pt) == bytewkb
+    @test writewkb(pt, hex=true) == hexwkb
+    @test writewkb(pt, 4326) == bytewkb_srid
+    @test writewkb(pt, 4326, hex=true) == hexwkb_srid
+
+    pt = readwkb(bytewkb)
+    @test isa(pt, GeoInterface.AbstractPoint)
+    @test GeoInterface.coordinates(pt) == [x, y]
+
+    pt = readwkb(hexwkb, hex=true)
+    @test GeoInterface.geotype(pt) == :Point
+    @test GeoInterface.coordinates(pt) == [x, y]
+
+    pt = readwkb(bytewkb_srid)
+    @test GeoInterface.geotype(pt) == :Point
+    @test GeoInterface.coordinates(pt) == [x, y]
+    @test getSRID(pt) == srid
+
+    pt = readwkb(hexwkb_srid, hex=true)
+    @test GeoInterface.geotype(pt) == :Point
+    @test GeoInterface.coordinates(pt) == [x, y]
+    @test getSRID(pt) == srid
+
+    # GEOSSRIDGetSetTest
+    pt = readgeom(wkt)
+    @test_broken getSRID(pt)
+    setSRID(pt, srid)
+    @test getSRID(pt) == srid
 end

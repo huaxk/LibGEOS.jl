@@ -18,6 +18,22 @@ end
 _readgeom(wkbbuffer::Vector{Cuchar}, context::GEOSContext = _context) =
     _readgeom(wkbbuffer, WKBReader(context), context)
 
+# add
+function _readhexwkb(wkbstring::String, wkbreader::WKBReader, context::GEOSContext=_context)
+    result = GEOSWKBReader_readHEX_r(context.ptr, wkbreader.ptr, pointer(wkbstring), length(wkbstring))
+    if result == C_NULL
+        error("LibGEOS: Error in GEOSWKBReader_readHEX_r")
+    end
+    result
+end
+
+# write hex wkb use new wrap
+function _writehexwkb(geom::GEOSGeom, wkbwriter::WKBWriter, context::GEOSContext=_context)
+    wkbsize = Ref{Csize_t}()
+    result = GEOSWKBWriter_writeHEX_r(context.ptr, wkbwriter.ptr, geom, wkbsize)
+    unsafe_wrap(Array, result, wkbsize[], own=true)
+end
+
 function _writegeom(geom::GEOSGeom, wktwriter::WKTWriter, context::GEOSContext = _context)
     unsafe_string(GEOSWKTWriter_write_r(context.ptr, wktwriter.ptr, geom))
 end
@@ -900,13 +916,21 @@ end
 function getSRID(ptr::GEOSGeom, context::GEOSContext = _context)
     result = GEOSGetSRID_r(context.ptr, ptr)
     if result == 0
-        error("LibGEOS: Error in GEOSGeomTypeId")
+        error("LibGEOS: Error in GEOSGetSRID")
     end
     result
 end
 
 setSRID(ptr::GEOSGeom, context::GEOSContext = _context) =
     GEOSSetSRID_r(context.ptr, ptr)
+
+# add SRID param
+setSRID(ptr::GEOSGeom, SRID::Integer, context::GEOSContext = _context) =
+    GEOSSetSRID_r(context.ptr, ptr, SRID)
+
+# set WKBWriter include srid
+setIncludeSRID(writer::WKBWriter, writeSRID::Bool, context::GEOSContext=_context) =
+    GEOSWKBWriter_setIncludeSRID_r(context.ptr, writer.ptr, UInt8(writeSRID))
 
 # May be called on all geometries in GEOS 3.x, returns -1 on error and 1
 # for non-multi geometries. Older GEOS versions only accept
