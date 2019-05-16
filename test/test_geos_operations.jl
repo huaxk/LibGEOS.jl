@@ -297,7 +297,7 @@ end
 
     # GEOSSRIDGetSetTest
     pt = readgeom(wkt)
-    @test_broken getSRID(pt)
+    # @test_broken getSRID(pt)
     setSRID(pt, srid)
     @test getSRID(pt) == srid
 end
