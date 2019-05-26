@@ -7,6 +7,8 @@ mutable struct Point <: GeoInterface.AbstractPoint
         point
     end
     Point(coords::Vector{Float64}) = Point(createPoint(coords))
+    # add transform any to float64
+    Point(coords::Vector{Any}) = Point(Vector{Float64}(coords))
     Point(x::Real, y::Real) = Point(createPoint(x,y))
     Point(x::Real, y::Real, z::Real) = Point(createPoint(x,y,z))
     Point(obj::T) where {T<:GeoInterface.AbstractPoint} = Point(GeoInterface.coordinates(obj))
