@@ -16,8 +16,17 @@ for geom in (:Point, :MultiPoint, :LineString, :MultiLineString, :LinearRing, :P
     @eval setSRID(obj::$geom, SRID::Integer, context::GEOSContext=_context) = setSRID(obj.ptr, SRID, context)
     @eval writewkb(obj::$geom, wkbwriter::WKBWriter, context::GEOSContext=_context; hex=false) =
          (hex ? _writehexwkb(obj.ptr, wkbwriter, context) : writegeom(obj, wkbwriter, context)) |> String
-    @eval writewkb(obj::$geom, context::GEOSContext=_context; hex=false) = writewkb(obj, WKBWriter(context), context; hex=hex) |> String
     # support srid1
+    @eval writewkb(obj::$geom, context::GEOSContext=_context; hex=false) = begin
+        srid = nothing
+        try
+            srid = getSRID(obj)
+        catch
+        end
+        writer = WKBWriter(context)
+        srid != nothing && setIncludeSRID(writer, true)
+        writewkb(obj, writer, context; hex=hex) |> String
+    end
     @eval writewkb(obj::$geom, SRID::Integer, context::GEOSContext=_context; hex=false) = begin
         writer = WKBWriter(context)
         setIncludeSRID(writer, true)
