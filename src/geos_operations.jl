@@ -72,9 +72,10 @@ readhexwkb(wkbstring::String, wkbreader::WKBReader, context::GEOSContext=_contex
 readhexwkb(wkbstring::String, context::GEOSContext=_context) =
     readhexwkb(wkbstring, WKBReader(context), context)
 
+readwkb(wkbbuffer::Vector{UInt8}, context::GEOSContext=_context) = readgeom(wkbbuffer, context)
 readwkb(wkbstring::String, context::GEOSContext=_context; hex=false) =
     hex ? readhexwkb(wkbstring, context) :
-          readgeom(Vector{UInt8}(wkbstring), context)
+          readwkb(Vector{UInt8}(wkbstring), context)
 #end add--------------------
 
 # -----
